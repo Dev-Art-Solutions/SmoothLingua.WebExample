@@ -62,14 +62,12 @@
             </div>
             <!-- /.card-body -->
             <div class="card-footer">
-                <form action="#" method="post">
-                    <div class="input-group">
-                        <input @bind=Text type="text" name="message" placeholder="Type Message ..." class="form-control">
-                        <span class="input-group-append">
-                            <button @onclick="Send" type="button" class="btn btn-primary">Send</button>
-                        </span>
-                    </div>
-                </form>
+                <div class="input-group">
+                    <input @bind="Text" @onkeyup="@Enter" type="text" name="message" placeholder="Type Message ..." class="form-control">
+                    <span class="input-group-append">
+                        <button @onclick="Send" type="button" class="btn btn-primary">Send</button>
+                    </span>
+                </div>
             </div>
             <!-- /.card-footer-->
         </div>
@@ -117,6 +115,14 @@
         var domain = chatService.GetDomain();
         Json = JsonConvert.SerializeObject(domain);
         ConversationId = Guid.NewGuid();
+    }
+
+    public async Task Enter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await Send();
+        }
     }
 
     private async Task Send()
