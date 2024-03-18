@@ -1,0 +1,134 @@
+﻿@page "/"
+@using Newtonsoft.Json
+@using SmoothLingua.WebExample.Services
+@rendermode InteractiveServer
+@inject IChatService chatService
+
+<PageTitle>Chat</PageTitle>
+
+<!-- Main row -->
+<div class="row">
+    <!-- Left col -->
+    <section class="col-lg-12 connectedSortable">
+        <!-- Custom tabs (Charts with tabs)-->
+        <!-- DIRECT CHAT -->
+        <div class="card direct-chat direct-chat-primary">
+            <div class="card-header">
+                <h3 class="card-title">Chat</h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <!-- Conversations are loaded here -->
+                <div class="direct-chat-messages">
+                    @foreach (var message in Chat)
+                    {
+                        if (message.IsBot)
+                        {
+                            <!-- Message. Default to the left -->
+                            <div class="direct-chat-msg">
+                                <div class="direct-chat-infos clearfix">
+                                    <span class="direct-chat-name float-left">Bot</span>
+                                </div>
+                                <!-- /.direct-chat-infos -->
+                                <img class="direct-chat-img" src="dist/img/bot.png" alt="message user image">
+                                <!-- /.direct-chat-img -->
+                                <div class="direct-chat-text">
+                                    @message.Message
+                                </div>
+                                <!-- /.direct-chat-text -->
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- /.direct-chat-msg -->
+                            <!-- Message to the right -->
+                            <div class="direct-chat-msg right">
+                                <div class="direct-chat-infos clearfix">
+                                    <span class="direct-chat-name float-right">User</span>
+                                </div>
+                                <!-- /.direct-chat-infos -->
+                                <img class="direct-chat-img" src="dist/img/user.png" alt="message user image">
+                                <!-- /.direct-chat-img -->
+                                <div class="direct-chat-text">
+                                    @message.Message
+                                </div>
+                                <!-- /.direct-chat-text -->
+                            </div>
+                            <!-- /.direct-chat-msg -->
+                        }
+                    }
+                </div>
+                <!--/.direct-chat-messages-->
+            </div>
+            <!-- /.card-body -->
+            <div class="card-footer">
+                <form action="#" method="post">
+                    <div class="input-group">
+                        <input @bind=Text type="text" name="message" placeholder="Type Message ..." class="form-control">
+                        <span class="input-group-append">
+                            <button @onclick="Send" type="button" class="btn btn-primary">Send</button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+            <!-- /.card-footer-->
+        </div>
+        <!--/.direct-chat -->
+        <!-- TO DO List -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="ion ion-clipboard mr-1"></i>
+                    Domain
+                </h3>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+                <textarea @bind=Json id="domain" class="p-3">
+                  </textarea>
+            </div>
+        </div>
+        <!-- /.card -->
+    </section>
+    <!-- /.Left col -->
+</div>
+<!-- /.row (main row) -->
+
+<script>
+    $(function () {
+        // CodeMirror
+        CodeMirror.fromTextArea(document.getElementById("domain"), {
+            mode: "javascript",
+            theme: "material"
+        });
+    })
+</script>
+
+@code {
+    private List<(bool IsBot, string Message)> Chat = new List<(bool, string)>();
+
+    private string Text;
+    private string Json;
+
+    private Guid ConversationId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var domain = chatService.GetDomain();
+        Json = JsonConvert.SerializeObject(domain);
+        ConversationId = Guid.NewGuid();
+    }
+
+    private async Task Send()
+    {
+        Chat.Add((false, Text));
+        var response = chatService.Handle(ConversationId, Text);
+        foreach (var text in response.Messages)
+        {
+            Chat.Add((true, text));
+        }
+
+        Text = string.Empty;
+        StateHasChanged();
+    }
+}
